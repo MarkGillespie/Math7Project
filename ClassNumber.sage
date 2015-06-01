@@ -62,7 +62,7 @@ def rootContinuedFraction(n):
   alphas = []
   coeffs = []
   num = n
-  root = n**(0.5)
+  root = sqrt(n)
   coeffs.append(int(root))
   alphas.append((0, 1, 1)) # store alphas in a triple (a, b, c) where alpha = (a + b*root(n))/c. This keeps the coefficients manageable
   n = (0, 1, 1)
@@ -112,7 +112,7 @@ def fromContinuedFraction(frac, k):
 
     # once the fraction begins to repeat, we have to look to the end of frac to find the right numbers
     else:
-      explicitFrac.append((x - len(frac[1]))%frac[0] + startOfCycle+1)
+      explicitFrac.append(frac[1][((x - len(frac[1]))%frac[0] + startOfCycle)])
 
   # store the numerator and denominator separately
   numerator = explicitFrac[k]
@@ -141,5 +141,6 @@ def fundamentalSolution(d):
   else :
     return fromContinuedFraction(continued_frac, 2 * period - 1)
 
-
-print( fundamentalSolution(128))
+for i in range(2, 130):
+  if sqrt(i) not in ZZ:
+    print(str(i) + " " + str(fundamentalSolution(i)))

@@ -56,18 +56,19 @@ def reduce(n):
   # print(divisor)
   return (n[0]//divisor, n[1]//divisor, n[2]//divisor)
 
-# returns the period and the continued fraction in a tuple. If no repetition is found,
+# returns the period and the continued fraction expansion of sqrt(n) in a tuple. If no repetition is found,
 # returns -1 for the period
-def rootContinuedFraction(n, k):
+def rootContinuedFraction(n):
   alphas = []
   coeffs = []
   num = n
   root = n**(0.5)
   coeffs.append(int(root))
   alphas.append((0, 1, 1)) # store alphas in a triple (a, b, c) where alpha = (a + b*root(n))/c. This keeps the coefficients manageable
-  print(root)
   n = (0, 1, 1)
-  for x in range(1,k):
+  x = 0
+  while(True):
+    x+=1
     if n[1] == 0 and n[0]/n[2] in ZZ:
       coeffs.append(n[0]/n[2])
       return(-1, coeffs)
@@ -94,5 +95,51 @@ def rootContinuedFraction(n, k):
 
   return (-1, coeffs)
 
-print(rootContinuedFraction(31, 50))
-# print(gcd(1256, 728))
+# returns the kth convergent of fraction frac. Frac is a tuple. The first component is the period of the fraction, the second is the continued fraction upon to the first repetiti
+def fromContinuedFraction(frac, k):
+  if k == 0:
+    return frac[1][0]
+
+  # record when the continued fraction begins to repeat
+  startOfCycle = len(frac[1])-frac[0]
+
+  # now, we will store k places of the continued fraction
+  explicitFrac = []
+  for x in range(k+1):
+    # until the record of the fraction ends, store the numbers normally
+    if (x < len(frac[1])):
+      explicitFrac.append(frac[1][x])
+
+    # once the fraction begins to repeat, we have to look to the end of frac to find the right numbers
+    else:
+      explicitFrac.append((x - len(frac[1]))%frac[0] + startOfCycle+1)
+
+  # store the numerator and denominator separately
+  numerator = explicitFrac[k]
+  denominator = 1
+  for x in range(k-1, -1, -1):
+    old_numerator = numerator
+
+    # we perform fraction addition a + 1/(b/c) = (ba + c)/b
+    numerator = explicitFrac[x] * numerator + denominator
+    denominator = old_numerator
+
+    # reduce the fraction by dividing by the gcd
+    divisor = gcd(numerator, denominator)
+    numerator /= divisor
+    denominator /= divisor
+  return (numerator, denominator)
+
+
+# finds the fundamental solution of the positive Pell equation x^2 - dy^2 = 1 using continued fractions. Returns this solution as a tuple (x, y)
+def fundamentalSolution(d):
+  # find the continued fracgtion expansion of d. This returns a tuple. The first component is the period of the continued fraction. The second component is the fraction itself
+  continued_frac = rootContinuedFraction(d)
+  period = continued_frac[0]
+  if period % 2 == 0:
+    return fromContinuedFraction(continued_frac, period - 1)
+  else :
+    return fromContinuedFraction(continued_frac, 2 * period - 1)
+
+
+print( fundamentalSolution(128))

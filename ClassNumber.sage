@@ -141,6 +141,13 @@ def fundamentalSolution(d):
   else :
     return fromContinuedFraction(continued_frac, 2 * period - 1)
 
-for i in range(2, 130):
+f  =  open("pell_solutions",  "w")
+
+solns = ""
+for i in range(2, 5000):
   if sqrt(i) not in ZZ:
-    print(str(i) + " " + str(fundamentalSolution(i)))
+    solns  += str(i) + " " + str(fundamentalSolution(i)) + "\n"
+
+f.write(solns)
+
+# print fundamentalSolution(1020304050)s

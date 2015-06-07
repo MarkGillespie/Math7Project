@@ -1,3 +1,5 @@
+import sys
+
 # Jacobi Symbol (n/p)
 def qr(n, p):
     # base cases
@@ -40,14 +42,18 @@ def in_list(lst, item):
   return -1
 
 def gcd(a, b):
-
   if (a < 0):
-    return gcd(-a, b)
+    a *= -1
   if (b < 0):
-    return gcd(a, -b)
-  if b == 0:
-    return a
-  return gcd(b, a%b)
+    b *= -1
+
+  while (b != 0):
+    temp = b
+    b = a % b
+    a = temp
+
+  return a
+
 
 def reduce(n):
   # print(str(n[0]) + " " + str(n[1]) + " " + str(n[2]))
@@ -141,13 +147,15 @@ def fundamentalSolution(d):
   else :
     return fromContinuedFraction(continued_frac, 2 * period - 1)
 
-f  =  open("pell_solutions",  "w")
+f  =  open("pell_solutions_2",  "w")
 
 solns = ""
-for i in range(2, 5000):
+for i in range(50000, 100000):
   if sqrt(i) not in ZZ:
     solns  += str(i) + " " + str(fundamentalSolution(i)) + "\n"
 
 f.write(solns)
+
+# print(str(sys.argv))
 
 # print fundamentalSolution(1020304050)s

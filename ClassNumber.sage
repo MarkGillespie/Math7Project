@@ -104,7 +104,7 @@ def rootContinuedFraction(n):
 # returns the kth convergent of fraction frac. Frac is a tuple. The first component is the period of the fraction, the second is the continued fraction upon to the first repetiti
 def fromContinuedFraction(frac, k):
   if k == 0:
-    return frac[1][0]
+    return (frac[1][0], 1)
 
   # record when the continued fraction begins to repeat
   startOfCycle = len(frac[1])-frac[0]
@@ -142,19 +142,38 @@ def fundamentalSolution(d):
   # find the continued fracgtion expansion of d. This returns a tuple. The first component is the period of the continued fraction. The second component is the fraction itself
   continued_frac = rootContinuedFraction(d)
   period = continued_frac[0]
-  if period % 2 == 0:
-    return fromContinuedFraction(continued_frac, period - 1)
-  else :
-    return fromContinuedFraction(continued_frac, 2 * period - 1)
 
-f  =  open("pell_solutions_2",  "w")
+  return fromContinuedFraction(continued_frac, period - 1)
 
-solns = ""
-for i in range(50000, 100000):
-  if sqrt(i) not in ZZ:
-    solns  += str(i) + " " + str(fundamentalSolution(i)) + "\n"
+  # if period % 2 == 0:
+  #   return fromContinuedFraction(continued_frac, period - 1)
+  # else :
+  #   return fromContinuedFraction(continued_frac, 2 * period - 1)
 
-f.write(solns)
+# finds the fundamental unit of the quadratic field Q(sqrt(d))
+def fundamentalUnit(d):
+  if d % 8 != 5:
+    return fundamentalSolution(d)
+  else:
+    soln=fundamentalSolution(d)
+    # print(str(soln[0]) + " " + str(soln[1]))
+    for a in range(soln[0]):
+      for b in range(soln[1]):
+        if a^3 + 3*a*b^2 * d == 8 * soln[0] and 3 * a^2 * b + b^3 * d == 8 * soln[1]:
+          return (a, b)
+    return (soln[0], soln[1])
+
+step = 1001
+start = 0
+for j in range(1):
+  solns = ""
+  for i in range(start + step*j, start + step*(j+1)):
+    if sqrt(i) not in ZZ:
+      solns  += str(i) + " " + str(fundamentalUnit(i)) + "\n"
+  f  =  open("fundamental_units_" + str(j),  "w")
+  f.write(solns)
+  f.close()
+  print(start + step*j)
 
 # print(str(sys.argv))
 

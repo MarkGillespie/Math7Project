@@ -1,5 +1,3 @@
-import sys
-
 # Jacobi Symbol (n/p)
 def qr(n, p):
     # base cases
@@ -15,6 +13,8 @@ def qr(n, p):
             return 1
         else:
             return -1
+    elif n > p:
+      return qr(n%p, p)
     # special case for p = 2
     # 1 is the only quadratic residue mod 2, so check if n is congruent to 1 mod 2
     elif p == 2:
@@ -153,28 +153,104 @@ def fundamentalSolution(d):
 # finds the fundamental unit of the quadratic field Q(sqrt(d))
 def fundamentalUnit(d):
   if d % 8 != 5:
-    return fundamentalSolution(d)
+    soln = fundamentalSolution(d)
+    return (soln[0] + sqrt(d) * soln[1])
   else:
     soln=fundamentalSolution(d)
     # print(str(soln[0]) + " " + str(soln[1]))
-    for a in range(soln[0]):
-      for b in range(soln[1]):
-        if a^3 + 3*a*b^2 * d == 8 * soln[0] and 3 * a^2 * b + b^3 * d == 8 * soln[1]:
-          return (a, b)
-    return (soln[0], soln[1])
+    for a in range(1, 2 * pow(soln[0], 1/3) + 1):
+      b = sqrt((8*soln[0] - pow(a, 3))/(3*a*d))
+      if b in ZZ and 3 * pow(a, 2) * b + pow(b, 3) * d == 8 * soln[1]:
+          return (a/2 + b/2 * sqrt(d))
+    return (soln[0] + soln[1] * sqrt(d))
 
-step = 1001
-start = 0
-for j in range(1):
+# print(fundamentalUnit(13))
+# 
+
+#page 288
+def cohenFundamentalUnit(D):
+  d = int(sqrt(D))
+  if (d % 2 == D % 2):
+    b = d
+  else:
+    b = d-1
+
+  u1 = -b
+  u2 = 2
+  v1 = 1
+  v2 = 0
+  p = b
+  q = 2
+
+  while True:
+    # print (str(D) + " " + str(p) + " " + str(q))
+    A = int((p + d)/q)
+    t = p
+    p = A * q - p
+
+    if t == p and v2 != 0:
+      u = abs((pow(u2, 2) + pow(v2, 2) * D)/q)
+      v = abs((2 * u2 * v2)/q)
+      return (u/2, v/2)
+    else:
+      t = A * u2 + u1
+      u1 = u2
+      u2 = t
+      t = A * v2 + v1
+      v1 = v2
+      v2 = t
+      t = q
+      q = (D - pow(p, 2))/q
+
+    if q == t and v2 != 0:
+      u = abs((u1 * u2 + D * v1 * v2)/q)
+      v = abs((u1 * v2 + u2 * v1)/q)
+      return (u/2, v/2)
+
+#page 288
+def cohenFundamentalUnitSlower(D):
+  d = int(sqrt(D))
+  if (d % 2 == D % 2):
+    b = d
+  else:
+    b = d-1
+
+  u1 = -b
+  u2 = 2
+  v1 = 1
+  v2 = 0
+  p = b
+  q = 2
+  loop = True
+
+  while loop:
+    print (str(D) + " " + str(p) + " " + str(q))
+    A = int((p + d)/q)
+    p = A * q - p
+    q = (D - pow(p, 2))/q
+    t = A * u2 + u1
+    u1 = u2
+    u2 = t
+    t = A * v2 + v1
+    v1 = v2
+    v2 = t
+
+    loop = not (q == 2 and p % 2 == b % 2)
+
+  u = abs(u2)
+  v = abs(v2)
+  return(u/2, v/2)
+
+step = 1000
+start = 1000
+f  =  open("fundamental_units_cohen_1.txt", "w")
+for j in range(99):
   solns = ""
   for i in range(start + step*j, start + step*(j+1)):
     if sqrt(i) not in ZZ:
-      solns  += str(i) + " " + str(fundamentalUnit(i)) + "\n"
-  f  =  open("fundamental_units_" + str(j),  "w")
+      answer = cohenFundamentalUnitSlower(i)
+      solns  += str(i) + " " + str(answer) + "\n"
   f.write(solns)
-  f.close()
-  print(start + step*j)
-
-# print(str(sys.argv))
-
-# print fundamentalSolution(1020304050)s
+  f.flush()  
+  print(str(start + step*(j+1)) + " finished")
+f.close()

@@ -1,38 +1,3 @@
-# Jacobi Symbol (n/p)
-def qr(n, p):
-    # base cases
-    if n == 0 or n == p or mod(n, p) == 0:
-        return 0
-    # positive base case: 1 is a square
-    elif n == 1:
-        return 1
-    # special case for n == 2
-    # we proved in class that (2, p) = 1 iff p is congruent to plus or minus 1 modulo 8
-    elif n == 2:
-        if mod(p, 8) == 1 or mod(p, 8) == 7:
-            return 1
-        else:
-            return -1
-    elif n > p:
-      return qr(n%p, p)
-    # special case for p = 2
-    # 1 is the only quadratic residue mod 2, so check if n is congruent to 1 mod 2
-    elif p == 2:
-        return 1
-    # recursive case
-    else:
-        #only use quadratic reciprocity if p,q odd. Otherwise split by dividing one by 2
-        if mod(p, 2) == 1:
-            if mod(n, 2) == 1:
-                if mod(n, 4) == 1 or mod(p, 4) == 1:
-                    return qr(p % n,  n)
-                else:
-                    return -1*qr(p % n,  n)
-            else:
-                return qr(2, p) * qr(n/2, p)
-        else:
-            return qr(n, 2) * qr(n, p/2)
-
 # if item is in lst, returns its position. Otherwise returns -1
 def in_list(lst, item):
   for x in range(len(lst)):
@@ -224,7 +189,7 @@ def cohenFundamentalUnitSlower(D):
   loop = True
 
   while loop:
-    print (str(D) + " " + str(p) + " " + str(q))
+    # print (str(D) + " " + str(p) + " " + str(q))
     A = int((p + d)/q)
     p = A * q - p
     q = (D - pow(p, 2))/q
@@ -239,12 +204,12 @@ def cohenFundamentalUnitSlower(D):
 
   u = abs(u2)
   v = abs(v2)
-  return(u/2, v/2)
+  return(u/2 +  v/2 * sqrt(D))
 
-step = 1000
-start = 1000
-f  =  open("fundamental_units_cohen_1.txt", "w")
-for j in range(99):
+step = 10000
+start = 100000
+f  =  open("fundamental_units_cohen_2.txt", "w")
+for j in range(90):
   solns = ""
   for i in range(start + step*j, start + step*(j+1)):
     if sqrt(i) not in ZZ:

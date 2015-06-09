@@ -1,3 +1,58 @@
+def qr(n,p):  #Legendre symbol
+    if n == 0:
+        return 0
+    else:
+        if (n^((p-1)/2)) % p == 1:
+            return 1
+        else:
+            return -1
+            
+def kron_unit(a,u): #kronecker symbol for units
+    if u == 1:
+      return 1
+        
+    elif u == -1:
+        if a >= 0:
+            return 1
+            
+        elif a < 0:
+            return -1
+            
+def kron_two(a): #kronecker symbol for p=2
+    if a % 2 == 0:
+        return 0
+            
+    elif a % 8 == 1 or a % 8 == 7:
+        return 1
+            
+    elif a % 8 == 3 or a % 8 == 5:
+        return -1
+        
+def kron(a,b): #General kronecker symbol
+    if b == 0:
+        if a == 1 or a == -1:
+            return 1
+        else:
+            return 0
+    
+    elif b == 1 or b == -1:
+        return kron_unit(a,b)
+            
+    elif b == 2:
+        return kron_two(b)
+        
+    F = factor(b)
+    F_lst = list(F)
+    ks = kron_unit(a, F.unit())
+    for p in F_lst:
+        if p[0] == 2:
+            ks = ks * (kron_two(a))^(p[1])
+        else:
+            ks = ks * (qr(a,p[0]))^(p[1])
+            
+            
+    return ks
+
 # if item is in lst, returns its position. Otherwise returns -1
 def in_list(lst, item):
   for x in range(len(lst)):
@@ -129,50 +184,7 @@ def fundamentalUnit(d):
           return (a/2 + b/2 * sqrt(d))
     return (soln[0] + soln[1] * sqrt(d))
 
-# print(fundamentalUnit(13))
-# 
-
-#page 288
-def cohenFundamentalUnit(D):
-  d = int(sqrt(D))
-  if (d % 2 == D % 2):
-    b = d
-  else:
-    b = d-1
-
-  u1 = -b
-  u2 = 2
-  v1 = 1
-  v2 = 0
-  p = b
-  q = 2
-
-  while True:
-    # print (str(D) + " " + str(p) + " " + str(q))
-    A = int((p + d)/q)
-    t = p
-    p = A * q - p
-
-    if t == p and v2 != 0:
-      u = abs((pow(u2, 2) + pow(v2, 2) * D)/q)
-      v = abs((2 * u2 * v2)/q)
-      return (u/2, v/2)
-    else:
-      t = A * u2 + u1
-      u1 = u2
-      u2 = t
-      t = A * v2 + v1
-      v1 = v2
-      v2 = t
-      t = q
-      q = (D - pow(p, 2))/q
-
-    if q == t and v2 != 0:
-      u = abs((u1 * u2 + D * v1 * v2)/q)
-      v = abs((u1 * v2 + u2 * v1)/q)
-      return (u/2, v/2)
-
-#page 288
+#page 270
 def cohenFundamentalUnitSlower(D):
   d = int(sqrt(D))
   if (d % 2 == D % 2):
@@ -206,16 +218,76 @@ def cohenFundamentalUnitSlower(D):
   v = abs(v2)
   return(u/2 +  v/2 * sqrt(D))
 
-step = 10000
-start = 100000
-f  =  open("fundamental_units_cohen_2.txt", "w")
-for j in range(90):
-  solns = ""
-  for i in range(start + step*j, start + step*(j+1)):
-    if sqrt(i) not in ZZ:
-      answer = cohenFundamentalUnitSlower(i)
-      solns  += str(i) + " " + str(answer) + "\n"
-  f.write(solns)
-  f.flush()  
-  print(str(start + step*(j+1)) + " finished")
+def analyticClassNumberTheorem(d, units):
+  # print "original d: " + str(d)
+  for i in range(sqrt(d)+1, 1, -1):
+    # print str(i) + " " +  str(d % i * i)
+    if d % (i * i) == 0:
+      d //= (i * i)
+  # print "d: " + str(d)
+  if d % 4 == 1:
+    D = d
+  else:
+    D = 4 * d
+  series = 0
+  for r in range(1, int((D-1)/2)+1):
+    series += (kronecker_symbol(D, r) * ln(sin((r * pi)/D))).numerical_approx()
+  series /= -(ln(units[d])).numerical_approx()
+  return series
+
+
+#started 11:54
+# f = open("fundamental_units(first_thousand).txt")
+# f = open("short_list")
+# f = open("longer_list")
+f = open("fundamental_units_cohen_all.txt")
+answers = open("class_numbers(all)", "w")
+unit_list = str.split(f.read(), "\n")
+units = {}
+for s in unit_list:
+  components = str.split(s, " ", 1)
+  print components
+  units[int(components[0])] = sage_eval(components[1])
+
+print "made list"
+
+for i in units:
+  K = QuadraticField(i, 'x')
+  calculated = analyticClassNumberTheorem(i, units).round()
+  if calculated != K.class_number():
+    print str(i) + "wrong "
+  else:
+    print str(i)
+  answers.write(str(i) + " " + str(calculated) + "\n")
+
 f.close()
+answers.close()
+  # print str(i) + " | correct: " + str(K.class_number()) + " | calculated: " + str((analyticClassNumberTheorem(i, units)).round())
+    
+
+# started 9:55
+# finished 10:50
+# step = 1000
+# start = 3
+# f  =  open("fundamental_units_cohen_all.txt", "w")
+# for j in range(1000):
+#   solns = ""
+#   for i in range(start + step*j, start + step*(j+1)):
+#     if sqrt(i) not in ZZ:
+#       answer = cohenFundamentalUnitSlower(i)
+#       solns  += str(i) + " " + str(answer) + "\n"
+#   f.write(solns)
+#   f.flush()  
+#   print(str(start + step*(j+1)) + " finished")
+# f.close()
+
+
+# for i in range(15):
+
+
+
+# for x in range(25):
+#   for y in range(25):
+#     if kron(x, y) != kronecker_symbol(x, y):
+#       print("(" + str(x) + " , " + str(y) + ") | kron: " + str(kron(x, y)) + " | kronecker: " + str(kronecker_symbol(x, y)))
+# print "done:"

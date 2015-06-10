@@ -1,5 +1,7 @@
+import time
+
 def qr(n,p):  #Legendre symbol
-    if n == 0:
+    if n == 0 or n % p == 0:
         return 0
     else:
         if (n^((p-1)/2)) % p == 1:
@@ -18,7 +20,7 @@ def kron_unit(a,u): #kronecker symbol for units
         elif a < 0:
             return -1
             
-def kron_two(a): #kronecker symbol for p=2
+def kron_two(a,b): #kronecker symbol for p=2
     if a % 2 == 0:
         return 0
             
@@ -39,14 +41,14 @@ def kron(a,b): #General kronecker symbol
         return kron_unit(a,b)
             
     elif b == 2:
-        return kron_two(b)
+        return kron_two(a,b)
         
     F = factor(b)
     F_lst = list(F)
     ks = kron_unit(a, F.unit())
     for p in F_lst:
         if p[0] == 2:
-            ks = ks * (kron_two(a))^(p[1])
+            ks = ks * (kron_two(a,b))^(p[1])
         else:
             ks = ks * (qr(a,p[0]))^(p[1])
             
@@ -231,37 +233,68 @@ def analyticClassNumberTheorem(d, units):
     D = 4 * d
   series = 0
   for r in range(1, int((D-1)/2)+1):
-    series += (kronecker_symbol(D, r) * ln(sin((r * pi)/D))).numerical_approx()
+    series += (kron(D, r) * ln(sin((r * pi)/D))).numerical_approx()
   series /= -(ln(units[d])).numerical_approx()
   return series
 
+# disc_lst = range(2, 100)
+# for d in disc_lst:
+#     if sqrt(d) in ZZ:
+#         disc_lst.remove(d)
+        
+# i = 0
+# for d in disc_lst:
+#     if d % 4 == 2 or d % 4 == 3:
+#         disc_lst[i] = disc_lst[i] * 4
+#     i = i + 1
+        
+# def class_sum(d):
+#     r = 1
+#     sum = 0
+#     while r <= floor((d - 1)/2):
+#         sum = sum + (kron(d, r) * ln(sin((r * pi)/d)))
+#         r = r + 1
+#     return sum
 
-#started 11:54
+# fund_unit_lst = [1 + sqrt(2), 2 + sqrt(3), (1/2)*(1+sqrt(5)), 5 + 2*sqrt(6), 8 + 3*sqrt(7), 1 + sqrt(2), 3 + sqrt(10), 10 + 3*sqrt(11)]
+# h_list = []
+# disc_index = 0
+# for e in fund_unit_lst:
+#     regulator = -1/(ln(e))
+#     sum = class_sum(disc_lst[disc_index])
+#     h_d = N(regulator * sum).round()
+#     h_list.append(h_d)
+#     disc_index = disc_index + 1
+    
+# print h_list
+
+# started 1:39
+# finished 1:40
 # f = open("fundamental_units(first_thousand).txt")
-# f = open("short_list")
-# f = open("longer_list")
-f = open("fundamental_units_cohen_all.txt")
-answers = open("class_numbers(all)", "w")
-unit_list = str.split(f.read(), "\n")
-units = {}
-for s in unit_list:
-  components = str.split(s, " ", 1)
-  print components
-  units[int(components[0])] = sage_eval(components[1])
+# # f = open("short_list")
+# # f = open("longer_list")
+# # f = open("fundamental_units_cohen_all.txt")
+# answers = open("class_numbers(first_thousand)", "w")
+# unit_list = str.split(f.read(), "\n")
+# units = {}
+# for s in unit_list:
+#   components = str.split(s, " ", 1)
+#   # print components
+#   units[int(components[0])] = sage_eval(components[1])
 
-print "made list"
+# print "made list"
 
-for i in units:
-  K = QuadraticField(i, 'x')
-  calculated = analyticClassNumberTheorem(i, units).round()
-  if calculated != K.class_number():
-    print str(i) + "wrong "
-  else:
-    print str(i)
-  answers.write(str(i) + " " + str(calculated) + "\n")
+# for i in units:
+#   K = QuadraticField(i, 'x')
+#   calculated = analyticClassNumberTheorem(i, units).round()
+#   if calculated != K.class_number():
+#     print str(i) + "wrong "
+#   else:
+#     print str(i)
+#   answers.write(str(i) + " " + str(calculated) + "\n")
 
-f.close()
-answers.close()
+# f.close()
+# answers.close()
   # print str(i) + " | correct: " + str(K.class_number()) + " | calculated: " + str((analyticClassNumberTheorem(i, units)).round())
     
 
@@ -282,6 +315,22 @@ answers.close()
 # f.close()
 
 
+# took 9229 seconds
+step = 100
+start = 1
+f  =  open("fundamental_units(first_thousand)2.txt", "w")
+startTime = time.clock();
+for j in range(10):
+  solns = ""
+  for i in range(start + step*j, start + step*(j+1)):
+    if sqrt(i) not in ZZ:
+      answer = fundamentalUnit(i)
+      solns  += str(i) + " " + str(answer) + "\n"
+  f.write(solns)
+  f.flush()  
+  print(str(start + step*(j+1)) + " finished")
+f.close()
+print str(time.clock() - startTime) + " seconds"
 # for i in range(15):
 
 

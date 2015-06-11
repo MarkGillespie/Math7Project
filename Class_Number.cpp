@@ -141,7 +141,7 @@ bool isSquare(int n) {
   return n == root * root;
 }
 
-void fill_units(std::string filename, int length, double(arr)[]) {
+void fill_units(std::string filename, int length, std::vector<double> &arr) {
   std::ifstream myFile;
   myFile.open(filename);
   std::string line;
@@ -153,7 +153,7 @@ void fill_units(std::string filename, int length, double(arr)[]) {
       int index = std::stoi(line.substr(0, split_pos));
       double unit = std::stod(line.substr(split_pos+1));
       // std::cout<<line.substr(split_pos+1)<<" "<<unit<<std::endl;
-      arr[index] = unit;
+      arr.at(index) = unit;
       counter++;
       if (isSquare(counter)) {
         counter++;
@@ -168,16 +168,20 @@ void fill_units(std::string filename, int length, double(arr)[]) {
 int main(int argc, char **argv) {
   // std::cout<< class_number(3, log(sqrt(3) + 2))<<std::endl;
   
-  std::ofstream output ("c_class_numbers.txt");
+  std::ofstream output ("c_class_numbers_all.txt");
   if (!output.is_open()) {
     std::cout<<"closed"<<std::endl;
   }
 
   int input_len = 1000000;
-  double units[1000000] = {0};
-  int class_nums[1000000] = {0};
-  // std::cout<<units[0]<<std::endl;
-  fill_units("short_list_doubles", input_len, units);
+  std::vector<double> units(input_len);
+  std::vector<int> class_nums(input_len);
+
+  fill_units("fundamental_units_all_doubles", input_len, units);
+
+
+  std::cout<<units.at(3)<<std::endl;
+  std::cout<<"loaded units"<<std::endl;
 
   int step = 2;
   int giant_step = input_len/step;
@@ -195,15 +199,15 @@ int main(int argc, char **argv) {
           }
         }
         if (d != position) {
-          class_number = class_nums[d];
+          class_number = class_nums.at(d);
         } else {
           int D = d;
           if (d % 4 != 1) {
             D *= 4;
           }
-          class_number = get_class_number(D, log(units[d]));
+          class_number = get_class_number(D, log(units.at(d)));
         }
-        class_nums[i] = class_number;
+        class_nums.at(i) = class_number;
         stream += std::to_string(position) + " " + std::to_string(class_number) + (std::string)"\n";
       }      
     }

@@ -220,13 +220,30 @@ def cohenFundamentalUnitSlower(D):
   v = abs(v2)
   return(u/2 +  v/2 * sqrt(D))
 
+def E(x):
+  series = 1
+  for c in range(25, 0, -1):
+    series = (2 * c + x - (c * (c + 1))/series)
+    # print 2*c, pow(-1, c+1), c * (c + 1)
+  series = 1 - 1/series
+  series *= (e^-x)/x
+  return series.numerical_approx()
+  # return exp_integral_e1(x).numerical_approx()
+
+def erfc(x):
+  # series = 1
+  # X = (x^2 - 0.5).numerical_approx()
+  # for c in range(100, 0, -1):
+  #   series = (2 * c + X - (c * (2 * c + 1)/2)/series)
+  # series = (1 - 0.5/series).numerical_approx()
+  # series *= e^(-x^2)/(x * sqrt(pi))
+  # return series.numerical_approx()
+  return (1 - erf(x)).numerical_approx()
+
 def analyticClassNumberTheorem(d, units):
-  # print "original d: " + str(d)
   for i in range(sqrt(d)+1, 1, -1):
-    # print str(i) + " " +  str(d % i * i)
     if d % (i * i) == 0:
       d //= (i * i)
-  # print "d: " + str(d)
   if d % 4 == 1:
     D = d
   else:
@@ -237,43 +254,144 @@ def analyticClassNumberTheorem(d, units):
   series /= -(ln(units[d])).numerical_approx()
   return series
 
-# disc_lst = range(2, 100)
-# for d in disc_lst:
-#     if sqrt(d) in ZZ:
-#         disc_lst.remove(d)
-        
-# i = 0
-# for d in disc_lst:
-#     if d % 4 == 2 or d % 4 == 3:
-#         disc_lst[i] = disc_lst[i] * 4
-#     i = i + 1
-        
-# def class_sum(d):
-#     r = 1
-#     sum = 0
-#     while r <= floor((d - 1)/2):
-#         sum = sum + (kron(d, r) * ln(sin((r * pi)/d)))
-#         r = r + 1
-#     return sum
-
-# fund_unit_lst = [1 + sqrt(2), 2 + sqrt(3), (1/2)*(1+sqrt(5)), 5 + 2*sqrt(6), 8 + 3*sqrt(7), 1 + sqrt(2), 3 + sqrt(10), 10 + 3*sqrt(11)]
-# h_list = []
-# disc_index = 0
-# for e in fund_unit_lst:
-#     regulator = -1/(ln(e))
-#     sum = class_sum(disc_lst[disc_index])
-#     h_d = N(regulator * sum).round()
-#     h_list.append(h_d)
-#     disc_index = disc_index + 1
+def lam(D): #takes D = discriminant
+    factor_lst = list(factor(D))
+    for f in factor_lst:
+        if f[0] % 4 == 3:
+            return 2 #returns 2 if D has a prime divisor congruent to 3 (mod 4)
+    return 1 #returns 1 if all prime divisors of D are congruent to 1 or 2 (mod 4)
     
-# print h_list
+def dist_prime(d): #takes d = fundamental discriminant
+    return len(list(factor(d))) #returns the number of disctinct prime divisors of delta   
 
-# started 1:39
-# finished 1:40
+def L(D, R): #L-function to compute class number
+  delta = D
+  if D % 4 == 2 or D % 4 == 3:
+      delta = 4 * delta
+      
+  t = dist_prime(delta) #number of distinct prime divisors
+  s = lam(D) #takes value of 1 or 2
+  l = ln((sqrt(pi/delta))/(R * 2^(t-s)))
+  if l > 1:
+      c = 6 - sqrt(27 - 2*l)
+  elif l < 1:
+      c = sqrt(15 + l) - 3  
+  M = floor(c*sqrt(delta)/sqrt(pi)) + 1 #upper limit on sum to compute
+  M *= 2 
+  M = 2 * sqrt(D)
+  C_m = 0
+  i = 1
+  while i <= M:
+      C_m = C_m + kron(D,i) * (E(i^2 * pi/D) + erfc(i * sqrt(pi/D)) * sqrt(D)/i)
+      i = i + 1
+  return C_m
+
+def slow_L(D): #L-function to compute class number
+  delta = D
+  if D % 4 == 2 or D % 4 == 3:
+      delta = 4 * delta
+      
+  t = dist_prime(delta) #number of distinct prime divisors
+  s = lam(D) #takes value of 1 or 2
+  l = ln((sqrt(pi/delta))/(2^(t-s)))
+  if l > 1:
+      c = 6 - sqrt(27 - 2*l)
+  elif l < 1:
+      c = sqrt(15 + l) - 3  
+  M = floor(c*sqrt(delta)/sqrt(pi)) + 1 #upper limit on sum to compute 
+  M = 6 * sqrt(D)
+  x,y,t = var('x, y, t')
+  assume(x > 0)
+  assume(y > 0)
+  E = integral((e^(-t))/t, t, x, +Infinity)
+  erfc = (2/sqrt(pi))*integral(e^(-t^2), t, y, +Infinity)
+  C_m = 0
+  i = 1
+  while i <= M:
+      C_m = C_m + kron(D,i) * (E(i^2 * pi/D) + erfc(i * sqrt(pi/D)) * sqrt(D)/i)
+      i = i + 1
+  return C_m
+
+def ty_sum(d, units, stored):
+  if d in stored:
+    return stored[d]
+  for i in range(sqrt(d)+1, 1, -1):
+    if d % (i * i) == 0:
+      d //= (i * i)
+  if d % 4 == 1:
+    D = d
+  else:
+    D = 4 * d
+  return N((L(D, ln(units[d]))/(2 * ln(units[d])))).round()
+
+
+stored = {}
+# started 1:14
+f = open("fundamental_units_(first_half).txt")
+# f = open("medium_list")
+# f = open("long_list")
+# f = open("short_list")
+# startTime = time.clock();
+answers = open("faster_class_numbers(long_list_starting_at_300000)", "w")
+unit_list = str.split(f.read(), "\n")
+units = {}
+for s in unit_list:
+  components = str.split(s, " ", 1)
+  # print components
+  units[int(components[0])] = sage_eval(components[1])
+
+print "made list"
+
+step = 100
+start = 300000
+startTime = time.clock();
+for j in range(1000):
+  solns = ""
+  for i in range(start + step*j, start + step*(j+1)):
+    if sqrt(i) not in ZZ:
+      # K = QuadraticField(i, 'x')
+      calculated = int(ty_sum(i, units, stored))
+      # if calculated != K.class_number():
+      #   print str(i) + " wrong "
+      #   solns += (str(i) + "\n")
+      # else:
+        # print str(i)
+      solns += (str(i) + " " + str(calculated)) + "\n"
+  answers.write(solns)
+  answers.flush()  
+  print(str(start + step*(j+1)) + " finished")
+answers.close()
+f.close()
+print str(time.clock() - startTime) + " seconds"
+
+# for d in units:
+#   h = N((sqrt(d)/2)*(L(d)/ln(units[d]))).round()
+#   print str(d) + " " + str(L(d).numerical_approx()) + " " + str(h)
+
+# for d in units:
+#   K = QuadraticField(d, 'x')
+#   calculated = int(ty_sum(d, units, stored))
+#   if calculated != K.class_number():
+#     print str(d) + " wrong ", calculated, K.class_number()
+#     # answers.write(str(d) + "\n")
+#   else:
+#     print str(d)
+    # answers.write(str(d) + " " + str(calculated))
+
+# answers.close()
+# f.close()
+
+
+
+
+
+# for e in fund_unit_lst:
+#     h = N((sqrt(d)/2)*(L(d)/ln(e))).round()
+#     h_lst.append(h)
+
+# took 55.41 seconds
 # f = open("fundamental_units(first_thousand).txt")
-# # f = open("short_list")
-# # f = open("longer_list")
-# # f = open("fundamental_units_cohen_all.txt")
+# startTime = time.clock();
 # answers = open("class_numbers(first_thousand)", "w")
 # unit_list = str.split(f.read(), "\n")
 # units = {}
@@ -294,9 +412,8 @@ def analyticClassNumberTheorem(d, units):
 #   answers.write(str(i) + " " + str(calculated) + "\n")
 
 # f.close()
+# print str(time.clock() - startTime) + " seconds"
 # answers.close()
-  # print str(i) + " | correct: " + str(K.class_number()) + " | calculated: " + str((analyticClassNumberTheorem(i, units)).round())
-    
 
 # started 9:55
 # finished 10:50
@@ -316,27 +433,18 @@ def analyticClassNumberTheorem(d, units):
 
 
 # took 9229 seconds
-step = 100
-start = 1
-f  =  open("fundamental_units(first_thousand)2.txt", "w")
-startTime = time.clock();
-for j in range(10):
-  solns = ""
-  for i in range(start + step*j, start + step*(j+1)):
-    if sqrt(i) not in ZZ:
-      answer = fundamentalUnit(i)
-      solns  += str(i) + " " + str(answer) + "\n"
-  f.write(solns)
-  f.flush()  
-  print(str(start + step*(j+1)) + " finished")
-f.close()
-print str(time.clock() - startTime) + " seconds"
-# for i in range(15):
-
-
-
-# for x in range(25):
-#   for y in range(25):
-#     if kron(x, y) != kronecker_symbol(x, y):
-#       print("(" + str(x) + " , " + str(y) + ") | kron: " + str(kron(x, y)) + " | kronecker: " + str(kronecker_symbol(x, y)))
-# print "done:"
+# step = 100
+# start = 1
+# f  =  open("fundamental_units(first_thousand)2.txt", "w")
+# startTime = time.clock();
+# for j in range(10):
+#   solns = ""
+#   for i in range(start + step*j, start + step*(j+1)):
+#     if sqrt(i) not in ZZ:
+#       answer = fundamentalUnit(i)
+#       solns  += str(i) + " " + str(answer) + "\n"
+#   f.write(solns)
+#   f.flush()  
+#   print(str(start + step*(j+1)) + " finished")
+# f.close()
+# print str(time.clock() - startTime) + " seconds"

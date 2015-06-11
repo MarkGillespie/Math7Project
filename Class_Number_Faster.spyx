@@ -1,0 +1,95 @@
+from math import pi, e
+
+import time
+
+cdef extern from "math.h":
+    double log(double)
+
+def my_gamma(a, z):
+  cdef double s = 1
+  for i in range(50, 0, -1):
+    s = 2 * i - 1 - a + z + (i * (a - i))/s
+  s = pow(z, a) * pow(e,-z)/s
+  return s
+
+# Jacobi Symbol (n/p)
+def qr(n, p):
+    # base cases
+    if n == 0 or n == p or n % p == 0:
+        return 0
+    # positive base case: 1 is a square
+    elif n == 1:
+        return 1
+    # special case for n == 2
+    # we proved in class that (2, p) = 1 iff p is congruent to plus or minus 1 modulo 8
+    elif n == 2:
+        if p % 8 == 1 or p % 8 == 7:
+            return 1
+        else:
+            return -1
+    # special case for p = 2
+    # 1 is the only quadratic residue mod 2, so check if n is congruent to 1 mod 2
+    elif p == 2:
+        return 1
+    # recursive case
+    else:
+        #only use quadratic reciprocity if p,q odd. Otherwise split by dividing one by 2
+        if p % 2 == 1:
+            if n % 4 == 1:
+                if n % 4 == 1 or p % 4 == 1:
+                    return qr(p % n,  n)
+                else:
+                    return -1*qr(p % n,  n)
+            else:
+                return qr(2, p) * qr(n/2, p)
+        else:
+            return qr(n, 2) * qr(n, p/2)
+
+def E(x):
+  cdef double series = 1
+  for c in range(50, 0, -1):
+    series = (2 * c + x - (c * (c + 1))/series)
+  series = 1 - 1/series
+  series *= pow(e,-x)/x
+  return series
+
+def class_number(d, R):
+
+  cdef double logd = log(<double>d)
+  cdef double p1 = sqrt(d * logd) / (2 * pi)
+  cdef double p2 = 1 - 2 * R / logd
+  if pow(p2, 2) > 2 / logd:
+    p1 *= p2
+
+  cdef int n = round(p1)
+  cdef double p4 = pi/d
+
+  rootd = sqrt(d)
+  cdef double p5 = 1 - 1 / sqrt(pi) * my_gamma(1/2, p4)
+  cdef double S = rootd * p5 + E(p4)
+  cdef int k
+
+  for i in range(2, n + 1):
+    k = qr(d, i)
+    if k == 0:
+      continue
+    p2 = p4 * sqrt(i)
+    p5 = 1 - 1/sqrt(pi) * my_gamma(1/2, p2)
+    if k > 0:
+      S += (p2 + rootd * p5 / i)
+    else:
+      S -= (p2 + rootd * p5 / i)
+
+  S /= 2 * R
+  return round(S)
+
+
+
+y = 2000
+
+startTime = time.clock()
+for i in range(y):
+  x =  class_number(3, log(sqrt(3) + 2))
+print ((time.clock() - startTime)/y)
+print x
+

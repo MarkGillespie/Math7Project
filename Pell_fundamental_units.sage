@@ -1,3 +1,5 @@
+import time
+
 # if item is in lst, returns its position. Otherwise returns -1
 def in_list(lst, item):
   for x in range(len(lst)):
@@ -129,19 +131,30 @@ def fundamentalUnit(d):
           return (a/2 + b/2 * sqrt(d))
     return (soln[0] + soln[1] * sqrt(d))
 
+units = {}
+
 # took 9229 seconds
-step = 100
+step = 10
 start = 1
-f  =  open("fundamental_units(first_thousand)2.txt", "w")
 startTime = time.clock();
 for j in range(10):
   solns = ""
-  for i in range(start + step*j, start + step*(j+1)):
+  for k in range(start + step*j, start + step*(j+1)):
     if sqrt(i) not in ZZ:
-      answer = fundamentalUnit(i)
-      solns  += str(i) + " " + str(answer) + "\n"
-  f.write(solns)
-  f.flush()  
-  print(str(start + step*(j+1)) + " finished")
-f.close()
+
+      d = k # d is the squarefree part of k
+
+      for f in range(sqrt(d)+1, 1, -1):
+        if d % (f * f) == 0:
+          d //= (f * f)
+
+      if d == k:
+        answer = fundamentalUnit(k)
+        units[k] = answer
+      else:
+        answer = units[d]
+
+      print k, answer
+
+# f.close()
 print str(time.clock() - startTime) + " seconds"

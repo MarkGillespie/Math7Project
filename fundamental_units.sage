@@ -60,26 +60,3 @@ for j in range(1000):
   print(str(start + step*(j+1)) + " finished")
 f.close()
 print time.clock()-startTime
-
-# step = 1000
-# start = 3
-# f  =  open("fundamental_units_cohen_square.txt", "w")
-# for j in range(1000):
-#   solns = ""
-#   for d in range(start + step*j, start + step*(j+1)):
-#     if sqrt(d) not in ZZ:
-#       disc = d
-#       for i in range(sqrt(disc)+1, 1, -1):
-#         if disc % (i * i) == 0:
-#           disc //= (i * i)
-#       print disc, d
-#       if disc != d:
-#         answer = units[disc]
-#       else:
-#         answer = cohenFundamentalUnitSlower(d)
-#         units[d] = answer
-#       solns  += str(d) + " " + str(answer) + "\n"
-#   f.write(solns)
-#   f.flush()  
-#   print(str(start + step*(j+1)) + " finished")
-# f.close()

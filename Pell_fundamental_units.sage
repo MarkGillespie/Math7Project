@@ -134,27 +134,31 @@ def fundamentalUnit(d):
 units = {}
 
 # took 9229 seconds
-step = 10
+step = 100
 start = 1
+f  =  open("fundamental_units(first_thousand)2.txt", "w")
 startTime = time.clock();
 for j in range(10):
   solns = ""
   for k in range(start + step*j, start + step*(j+1)):
-    if sqrt(i) not in ZZ:
-
+    if sqrt(k) not in ZZ:
       d = k # d is the squarefree part of k
 
       for f in range(sqrt(d)+1, 1, -1):
         if d % (f * f) == 0:
           d //= (f * f)
 
+      # if d squarefree, do computation. Otherwise, look up the computation you've already done    
       if d == k:
         answer = fundamentalUnit(k)
         units[k] = answer
       else:
         answer = units[d]
+        
+      solns +=  str(k) + " " + str(answer)
 
-      print k, answer
+  f.write(solns)
+  print "finished ", step * (j + 1) + start
 
-# f.close()
+ f.close()
 print str(time.clock() - startTime) + " seconds"

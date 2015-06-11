@@ -1,7 +1,7 @@
-#include<Class_Number.h>
+#include <Class_Number.h>
 
 //Jacobi Symbl (n/p)
-int qr(int n, int p){
+int kronecker(int n, int p){
   //positive base case: 1 is a square
   if (n == 1 || p == 1) {
     return 1;
@@ -30,118 +30,48 @@ int qr(int n, int p){
     if (p % 2 == 1) {
       if (n % 2 == 1) {
         if (n % 4 == 1 || p % 4 == 1) {
-          return qr(p % n,  n);
+          return kronecker(p % n,  n);
         } else {
-          return -1*qr(p % n,  n);
+          return -1*kronecker(p % n,  n);
         }
       } else {
-        return qr(2, p) * qr(n/2, p);
+        return kronecker(2, p) * kronecker(n/2, p);
       }
     } else {
-      return qr(n, 2) * qr(n, p/2);
+      return kronecker(n, 2) * kronecker(n, p/2);
     }
   }
 }
 
-double gamma_inc(double a, double z){
-  double s = 1;
-  for (int i = 100; i > 0; i--){
-    s = 2 * i - 1 - a + z + (double)(i * (a - i))/s;
+int get_class_number(int D, long double R) {
+
+  int n = 0;
+  if (D < 1000) {
+    n = skroneckert(D);
+  } else if (D < 50000){
+    n = 2 * log(D) * log(D);
+  } else {
+    n = 2 * pow(log(D),2.5);
   }
-  s = pow(z, a) * pow(e,-z)/s;
-  return s;
-}
-
-double erfc(double x) {
-  double s = 1;
-  double X = pow(x, 2) - 0.5;
-
-  for (int i = 100; i > 0; i--) {
-    s = (double)2 * i + X - (i * (2 * i + 1)/(double) 2)/s;
-  }
-  s = 1 - 0.5/s;
-  s *= pow(e, -pow(x, 2))/(x * sqrt(pi));
-  return s;
-}
-
-double E(double x) {
-  double series = 1;
-  for (int c = 100; c > 0; c--) {
-    series = (2 * c + x - (c * (c + 1))/series);
-  }
-  series = 1 - 1/series;
-  series *= pow(e,-x)/x;
-  return series;
-}
-
-// int get_class_number(int d, double R) {
-
-//   double logd = log(d);
-//   double p1 = sqrt(d * logd) / (2 * pi);
-//   double p2 = 1 - 2 * R / logd;
-//   if (pow(p2, 2) > 2 / logd)
-//     p1 *= p2;
-
-//   int n = round(p1);
-//   double p4 = pi/d;
-
-//   double rootd = sqrt(d);
-//   double p5 = (double)1 - 1 / sqrt(pi) * gamma_inc(0.5, p4);
-//   double S = rootd * p5 + E(p4);
-//   int k;
-
-//   for (int i = 2; i <= n; i++) {
-//     k = qr(d, i);
-//     if (k == 0)
-//       continue;
-//     p2 = p4 * sqrt(i);
-//     p5 = 1 - 1/sqrt(pi) * gamma_inc(0.5, p2);
-//     if (k > 0) {
-//       S += (p2 + rootd * p5 / (double)i);
-//     } else {
-//       S -= (p2 + rootd * p5 / (double)i);
-//     } 
-//   }
-//   std::cout<<d<<" "<<S<<" "<<2*R<<std::endl;
-//   S /= (double)(2 * R);
-//   return round(S);
-// }
-
-double L(int D, double R) {
-
-  // double logd = log(D);
-  // double p1 = sqrt(D * logd) / (2 * pi);
-  // double p2 = 1 - 2 * R / logd;
-  // if (pow(p2, 2) > 2 / logd)
-  //   p1 *= p2;
-
-  // int n = round(p1) + 5;
-  int n = 4 * (int)sqrt(D);
-  double s = 0;
+  
+  long double s = 0;
   int k;
   for (int i = 1; i <= n; i++) {
-    k = qr(D, i);
+    k = kronecker(D, i);
     if (k != 0) {
-      double term = (double)k * (E(pow(i, 2) * pi/((double) D)) + erfc(i * sqrt(pi/( (double) D))) * sqrt(D)/((double) i));
-      s += term;
-      // std::cout<<"i: "<<i<<" s: "<<s<<" term: "<<term<<std::endl;
+      long double term = (long double)k * (gsl_sf_expint_E1(pow(i, 2) * pi/((long double) D)) + erfc(i * skroneckert(pi/( (long double) D))) * skroneckert(D)/((long double) i));
+      s += term/(2 * R);
     }
   }
-  // std::cout<<"D: "<<D<<" "<<s<<std::endl;
-  return s;
+  return round(s);
 } 
 
-int get_class_number(int D, double R) {
-  // std::cout<<"R: "<<R;
-  return round(L(D, R)/(2 * R));
-}
-
 bool isSquare(int n) {
-  int root = sqrt(n);
+  int root = skroneckert(n);
   return n == root * root;
 }
 
-void fill_units(std::string filename, int length, std::vector<double> &arr) {
+void fill_units(std::string filename, int length, std::vector<long double> &arr) {
   std::ifstream myFile;
   myFile.open(filename);
   std::string line;
@@ -151,9 +81,31 @@ void fill_units(std::string filename, int length, std::vector<double> &arr) {
     while (getline(myFile, line) && counter < length) {
       int split_pos = line.find(" ");
       int index = std::stoi(line.substr(0, split_pos));
-      double unit = std::stod(line.substr(split_pos+1));
-      // std::cout<<line.substr(split_pos+1)<<" "<<unit<<std::endl;
+      long double unit = std::stold(line.substr(split_pos+1));
       arr.at(index) = unit;
+      counter++;
+      if (isSquare(counter)) {
+        counter++;
+      }
+    }
+  } else {
+    std::cout<<"closed"<<std::endl;
+  }
+  myFile.close();
+}
+
+void load_correct_answers(std::string filename, int length, std::vector<int> &arr) {
+  std::ifstream myFile;
+  myFile.open(filename);
+  std::string line;
+
+  if (myFile.is_open()) {
+    int counter = 2;
+    while (getline(myFile, line) && counter < length) {
+      int split_pos = line.find(" ");
+      int index = std::stoi(line.substr(0, split_pos));
+      int class_num = std::stoi(line.substr(split_pos+1));
+      arr.at(index) = class_num;
       counter++;
       if (isSquare(counter)) {
         counter++;
@@ -165,147 +117,87 @@ void fill_units(std::string filename, int length, std::vector<double> &arr) {
 
 
 
-int main(int argc, char **argv) {
-  // std::cout<< class_number(3, log(sqrt(3) + 2))<<std::endl;
-  
-  std::ofstream output ("c_class_numbers_all.txt");
+int main(int argc, char **argv) {  
+
+  clock_t t;
+  t = clock();
+
+  std::string file_name = "c_class_numbers_all";
+  int start_point = 0;
+
+  if (argc > 1) {
+    if (argc != 4) {
+      std::cout<<"Usage: file index number, output file name, starting point"<<std::endl;
+      return 0;
+    }
+    int file_num = std::stoi(argv[1]);
+    file_name = argv[2] + std::to_string(file_num);
+    start_point = std::stoi(argv[3]);
+    std::cout<<file_num<<" "<<file_name<<" "<<start_point<<std::endl;
+  }
+
+  std::ofstream output (file_name);
   if (!output.is_open()) {
     std::cout<<"closed"<<std::endl;
   }
 
   int input_len = 1000000;
-  std::vector<double> units(input_len);
+  std::vector<long double> units(input_len);
   std::vector<int> class_nums(input_len);
-
-  fill_units("fundamental_units_all_doubles", input_len, units);
-
+  std::vector<int> correct_answers(input_len);
+  fill_units("regulators_all_doubles", input_len, units);
+  load_correct_answers("class_numbers.txt", input_len, correct_answers);
 
   std::cout<<units.at(3)<<std::endl;
   std::cout<<"loaded units"<<std::endl;
 
-  int step = 2;
+  std::cout<<" starting at "<<start_point<<std::endl;
+
+  int step = 1000;
   int giant_step = input_len/step;
   for (int i = 0; i < giant_step; i++) {
     std::string stream = "";
     for (int j = 0; j < step; j++) {
-      int position = i * step + j;
+      int position = i * step + j + start_point;
       if (!isSquare(position)) {
         int d = position;
         int class_number = 0;
-        for (int divisor = (int)(sqrt(d)); divisor > 1; divisor--) {
+        for (int divisor = (int)(skroneckert(d)); divisor > 1; divisor--) {
           if (d % (int)pow(divisor, 2) == 0) {
             d /= divisor;
             d /= divisor;
           }
         }
         if (d != position) {
-          class_number = class_nums.at(d);
+          if (class_nums.at(d) != 0) {
+            class_number = class_nums.at(d);
+          } else {
+            int D = d;
+            if (d % 4 != 1) {
+              D *= 4;
+            }
+            class_number = get_class_number(D, units.at(d));
+            class_nums.at(d) = class_number;
+          }
         } else {
           int D = d;
           if (d % 4 != 1) {
             D *= 4;
           }
-          class_number = get_class_number(D, log(units.at(d)));
+          class_number = get_class_number(D, units.at(d));
         }
-        class_nums.at(i) = class_number;
+
+        if (class_number != correct_answers.at(position)) {
+          std::cout<<position<<" ("<<class_number<<") is wrong. It should be "<<correct_answers.at(position)<<std::endl;
+        }
+        class_nums.at(position) = class_number;
         stream += std::to_string(position) + " " + std::to_string(class_number) + (std::string)"\n";
       }      
     }
-    // std::cout<<stream<<std::endl;
     output<<stream;
-    std::cout<<"finished with "<<step * (i + 1)<<std::endl;
+    std::cout<<"finished with "<<step * (i + 1) + start_point<<std::endl;
     
   }
   output.close();
-
-  
-  // for (int i = 1; i < 10; i++) {
-  //   for (int j = 1; j < 10; j++) {
-  //     std::cout<<qr(i, j)<<" ";
-  //   }
-  //   std::cout<<std::endl;
-  // }
-  // std::cout<<qr(7, 3);
-  
-  // std::cout<<qr(7, 1)<<std::endl;
-  // for (int i = 2; i < 25; i++) {
-  //   // std::cout<<"gamma: " <<gamma_inc(0.5, i)<<" E: "<<E(i)<<std::endl;
-  //   std::cout<<"erfc: " <<erfc(i)<<" E: "<<E(i)<<std::endl;
-  // }
-
-  // std::cout<<isSquare(1)<<sqrt(1)<<std::endl;
-
-  return 0;
+  std::cout<<"That took "<<(float)(clock() - t)CLOCKS_PER_SEC<<" seconds"<<std::endl;
 }
-
-
-
-
-//y = 2000
-
-//startTime = time.clock()
-//for i in range(y):
-//  x =  class_number(3, log(sqrt(3) + 2))
-//print ((time.clock() - startTime)/y)
-//print x
-
-// cdef dict stored, units
-// //started 1:14
-// //f = open("fundamental_units_(first_half).txt")
-// //f = open("medium_list")
-// f = open("long_list")
-// //f = open("short_list")
-// //startTime = time.clock();
-// answers = open("cython_list", "w")
-// cdef list unit_list = str.split(f.read(), "\n")
-// cdef list squares = [pow(x, 2) for x in range(1000)]
-// cdef list components
-
-// for s in unit_list:
-//   components = str.split(s, " ", 1)
-//   //units[<int>int(components[0])] = <unicode>(components[1])
-//   units["a"] = "b"
-
-// print "made list"
-// print units
-
-//cdef int startTime = time.clock()
-//cdef int answer
-//for d in units:
-//  if d not in squares:
-//      disc = d
-//      for i in range(sqrt(disc)+1, 1, -1):
-//        if disc % (i * i) == 0:
-//          disc //= (i * i)
-
-//      if disc == d:
-//        answer = <int> class_number(d, log(units[d]))
-//        units[d] = answer
-//        answers.write(str(d) + " " + answer + "\n")
-//        print d, answer
-//  //print(str(start + step*(j+1)) + " finished")
-//answers.close()
-//f.close()
-//print str(time.clock() - startTime) + " seconds"
-
-//step = 100
-//start = 300000
-//startTime = time.clock();
-//for j in range(1000):
-//  solns = ""
-//  for i in range(start + step*j, start + step*(j+1)):
-//    if sqrt(i) not in ZZ:
-//      //K = QuadraticField(i, 'x')
-//      calculated = int(ty_sum(i, units, stored))
-//      //if calculated != K.class_number():
-//      //  print str(i) + " wrong "
-//      //  solns += (str(i) + "\n")
-//      //else:
-//        //print str(i)
-//      solns += (str(i) + " " + str(calculated)) + "\n"
-//  answers.write(solns)
-//  answers.flush()  
-//  print(str(start + step*(j+1)) + " finished")
-//answers.close()
-//f.close()
-//print str(time.clock() - startTime) + " seconds"

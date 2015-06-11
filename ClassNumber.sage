@@ -55,60 +55,6 @@ def kron(a,b): #General kronecker symbol
             
     return ks
 
-#page 270
-def cohenFundamentalUnitSlower(D):
-  d = int(sqrt(D))
-  if (d % 2 == D % 2):
-    b = d
-  else:
-    b = d-1
-
-  u1 = -b
-  u2 = 2
-  v1 = 1
-  v2 = 0
-  p = b
-  q = 2
-  loop = True
-
-  while loop:
-    # print (str(D) + " " + str(p) + " " + str(q))
-    A = int((p + d)/q)
-    p = A * q - p
-    q = (D - pow(p, 2))/q
-    t = A * u2 + u1
-    u1 = u2
-    u2 = t
-    t = A * v2 + v1
-    v1 = v2
-    v2 = t
-
-    loop = not (q == 2 and p % 2 == b % 2)
-
-  u = abs(u2)
-  v = abs(v2)
-  return(u/2 +  v/2 * sqrt(D))
-
-def E(x):
-  series = 1
-  for c in range(25, 0, -1):
-    series = (2 * c + x - (c * (c + 1))/series)
-    # print 2*c, pow(-1, c+1), c * (c + 1)
-  series = 1 - 1/series
-  series *= (e^-x)/x
-  return series.numerical_approx()
-  # return exp_integral_e1(x).numerical_approx()
-
-def erfc(x):
-  # series = 1
-  # X = (x^2 - 0.5).numerical_approx()
-  # for c in range(100, 0, -1):
-  #   series = (2 * c + X - (c * (2 * c + 1)/2)/series)
-  # series = (1 - 0.5/series).numerical_approx()
-  # series *= e^(-x^2)/(x * sqrt(pi))
-  # return series.numerical_approx()
-  return (1 - erf(x)).numerical_approx()
-
 def analyticClassNumberTheorem(d, units):
   for i in range(sqrt(d)+1, 1, -1):
     if d % (i * i) == 0:
@@ -150,38 +96,20 @@ def L(D, R): #L-function to compute class number
   M = 2 * sqrt(D)
   C_m = 0
   i = 1
-  while i <= M:
-      C_m = C_m + kron(D,i) * (E(i^2 * pi/D) + erfc(i * sqrt(pi/D)) * sqrt(D)/i)
-      i = i + 1
-  return C_m
-
-def slow_L(D): #L-function to compute class number
-  delta = D
-  if D % 4 == 2 or D % 4 == 3:
-      delta = 4 * delta
-      
-  t = dist_prime(delta) #number of distinct prime divisors
-  s = lam(D) #takes value of 1 or 2
-  l = ln((sqrt(pi/delta))/(2^(t-s)))
-  if l > 1:
-      c = 6 - sqrt(27 - 2*l)
-  elif l < 1:
-      c = sqrt(15 + l) - 3  
-  M = floor(c*sqrt(delta)/sqrt(pi)) + 1 #upper limit on sum to compute 
-  M = 6 * sqrt(D)
   x,y,t = var('x, y, t')
   assume(x > 0)
   assume(y > 0)
   E = integral((e^(-t))/t, t, x, +Infinity)
   erfc = (2/sqrt(pi))*integral(e^(-t^2), t, y, +Infinity)
-  C_m = 0
-  i = 1
   while i <= M:
-      C_m = C_m + kron(D,i) * (E(i^2 * pi/D) + erfc(i * sqrt(pi/D)) * sqrt(D)/i)
+      term = kron(D,i) * (E(i^2 * pi/D) + erfc(i * sqrt(pi/D)) * sqrt(D)/i)
+      C_m = C_m + term
       i = i + 1
+  print D, C_m.numerical_approx()
   return C_m
 
 def ty_sum(d, units, stored):
+  q = d
   if d in stored:
     return stored[d]
   for i in range(sqrt(d)+1, 1, -1):
@@ -191,14 +119,17 @@ def ty_sum(d, units, stored):
     D = d
   else:
     D = 4 * d
-  return N((L(D, ln(units[d]))/(2 * ln(units[d])))).round()
+  s = N(L(D, ln(units[d])))
+  print q, s , N(2 * ln(units[d]))
+  return (s/(2 * ln(units[d]))).round()
+
 
 
 stored = {}
 # started 1:14
-f = open("fundamental_units_(first_half).txt")
+# f = open("fundamental_units_(first_half).txt")
 # f = open("medium_list")
-# f = open("long_list")
+f = open("long_list")
 # f = open("short_list")
 # startTime = time.clock();
 answers = open("faster_class_numbers(long_list_starting_at_300000)", "w")
@@ -212,7 +143,7 @@ for s in unit_list:
 print "made list"
 
 step = 100
-start = 300000
+start = 1#300000
 startTime = time.clock();
 for j in range(1000):
   solns = ""
@@ -225,13 +156,13 @@ for j in range(1000):
       #   solns += (str(i) + "\n")
       # else:
         # print str(i)
-      solns += (str(i) + " " + str(calculated)) + "\n"
-  answers.write(solns)
-  answers.flush()  
-  print(str(start + step*(j+1)) + " finished")
-answers.close()
-f.close()
-print str(time.clock() - startTime) + " seconds"
+#       solns += (str(i) + " " + str(calculated)) + "\n"
+#   answers.write(solns)
+#   answers.flush()  
+#   print(str(start + step*(j+1)) + " finished")
+# answers.close()
+# f.close()
+# print str(time.clock() - startTime) + " seconds"
 
 # for d in units:
 #   h = N((sqrt(d)/2)*(L(d)/ln(units[d]))).round()
